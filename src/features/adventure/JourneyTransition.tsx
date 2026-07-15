@@ -13,10 +13,11 @@ export function JourneyTransition() {
 
   useEffect(() => {
     visit('yosemite')
-    const seen = localStorage.getItem('kunu-yosemite-transition') === 'seen'
+    let seen = false
+    try { seen = localStorage.getItem('kunu-yosemite-transition') === 'seen' } catch { /* restrictive private mode */ }
     setCanSkip(seen)
     const finish = window.setTimeout(() => {
-      localStorage.setItem('kunu-yosemite-transition', 'seen')
+      try { localStorage.setItem('kunu-yosemite-transition', 'seen') } catch { /* the transition still completes */ }
       setMode('adventure')
     }, reducedMotion ? 900 : 5600)
     return () => window.clearTimeout(finish)
