@@ -42,13 +42,41 @@ function parseReference(reference: CharacterReference, index: number): { buffer:
   return { buffer, mimeType: reference.mimeType, filename: `reference-${index + 1}.${extension}` }
 }
 
-function errorResponse(error: unknown): { status: number; code: string; message: string } {
-  if (error instanceof Error && error.name === 'AbortError') return { status: 504, code: 'timeout', message: 'Character generation took too long. Please retry.' }
+interface CharacterErrorResponse {
+  status: number
+  code: string
+  message: string
+  diagnostic?: { providerStatus?: number; providerCode?: string; providerType?: string; parameter?: string; detail?: string }
+}
+
+function safeProviderDetail(message: string) {
+  return message
+    .replace(/sk-[A-Za-z0-9_-]+/g, '[redacted]')
+    .replace(/data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[image]')
+    .slice(0, 300)
+}
+
+export function errorResponse(error: unknown): CharacterErrorResponse {
+  if (error instanceof OpenAI.APIUserAbortError || error instanceof OpenAI.APIConnectionTimeoutError || (error instanceof Error && error.name === 'AbortError')) {
+    return { status: 504, code: 'timeout', message: 'Character generation took too long. Please retry.' }
+  }
   if (error instanceof OpenAI.APIError) {
     const apiCode = typeof error.code === 'string' ? error.code : ''
+    const diagnostic = {
+      providerStatus: error.status,
+      providerCode: apiCode || undefined,
+      providerType: error.type || undefined,
+      parameter: error.param || undefined,
+      detail: safeProviderDetail(error.message),
+    }
     if (error.status === 429) return { status: 429, code: 'rate_limited', message: 'The character studio is busy. Please wait a moment and retry.' }
-    if (apiCode.includes('content_policy') || apiCode.includes('moderation') || error.status === 403) return { status: 422, code: 'moderation', message: 'OpenAI could not create this character from the submitted references. Try different clear family photos.' }
+    if (apiCode.includes('content_policy') || apiCode.includes('moderation')) return { status: 422, code: 'moderation', message: 'OpenAI could not create this character from the submitted references. Try different clear family photos.' }
     if (error.status === 401) return { status: 503, code: 'api_key_invalid', message: 'The character studio is not configured correctly.' }
+    if (error.status === 403) return { status: 503, code: 'openai_access_denied', message: 'This OpenAI project does not currently have access to character generation.', diagnostic }
+    if (error.status === 400 || error.status === 404 || error.status === 422) {
+      return { status: 422, code: 'openai_request_rejected', message: 'OpenAI rejected the character request. Check the project model access, billing, and image settings.', diagnostic }
+    }
+    return { status: 502, code: 'openai_service_error', message: 'OpenAI could not complete character generation. Please retry shortly.', diagnostic }
   }
   if (error instanceof Error && ['unsupported_image', 'invalid_image', 'image_size'].includes(error.message)) {
     return { status: 400, code: error.message, message: 'Use three clear JPEG, PNG, or WebP photos under the upload limit.' }
@@ -96,8 +124,8 @@ export default async function generateCharacter(req: CharacterApiRequest, res: C
     return send(res, 200, { image: `data:image/jpeg;base64,${image}`, model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2' })
   } catch (error) {
     const mapped = errorResponse(error)
-    console.error('[Kunu] Character generation failed.', { code: mapped.code, status: mapped.status })
-    return send(res, mapped.status, { code: mapped.code, message: mapped.message })
+    console.error('[Kunu] Character generation failed.', { code: mapped.code, status: mapped.status, diagnostic: mapped.diagnostic })
+    return send(res, mapped.status, { code: mapped.code, message: mapped.message, diagnostic: mapped.diagnostic })
   } finally {
     clearTimeout(timeout)
   }

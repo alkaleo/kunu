@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import generateCharacter, { type CharacterApiRequest, type CharacterApiResponse } from '../../api/generate-character'
+import OpenAI from 'openai'
+import generateCharacter, { errorResponse, type CharacterApiRequest, type CharacterApiResponse } from '../../api/generate-character'
 
 function responseMock() {
   const state = { status: 200, body: undefined as unknown }
@@ -41,5 +42,16 @@ describe('/api/generate-character', () => {
     await generateCharacter(request({ consent: true, images: [] }), response)
     expect(state.status).toBe(400)
     expect(state.body).toMatchObject({ code: 'three_images_required' })
+  })
+
+  it('returns a safe provider diagnostic when OpenAI rejects a request', () => {
+    const error = new OpenAI.APIError(400, { code: 'invalid_value', type: 'invalid_request_error', param: 'model' }, 'Invalid model sk-secret-value', new Headers())
+    const mapped = errorResponse(error)
+    expect(mapped).toMatchObject({
+      status: 422,
+      code: 'openai_request_rejected',
+      diagnostic: { providerStatus: 400, providerCode: 'invalid_value', parameter: 'model' },
+    })
+    expect(mapped.diagnostic?.detail).not.toContain('sk-secret-value')
   })
 })
