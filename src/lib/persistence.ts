@@ -19,7 +19,7 @@ import type {
   PersistedKunuState,
 } from '../types/models'
 
-export const CURRENT_SCHEMA_VERSION = 2
+export const CURRENT_SCHEMA_VERSION = 3
 
 const activityIds: ActivityId[] = ['waterfall', 'souvenirs', 'memory', 'question']
 const journeyIds = new Set(seedJourneys.map((journey) => journey.id))
@@ -176,6 +176,9 @@ export function migrateAndRepairSnapshot(value: unknown): PersistedKunuState {
       dateOfBirth: text(savedChild.dateOfBirth, fallback.child.dateOfBirth),
       characterStyle: savedChild.characterStyle === 'kunu-block' ? savedChild.characterStyle : fallback.child.characterStyle,
       homeMusic: savedChild.homeMusic === 'calm' ? savedChild.homeMusic : fallback.child.homeMusic,
+      characterImageId: typeof savedChild.characterImageId === 'string' && savedChild.characterImageId.trim()
+        ? savedChild.characterImageId
+        : undefined,
     },
     journeys,
     activityProgress: { yosemite: progress },

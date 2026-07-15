@@ -16,6 +16,7 @@ interface KunuDBSchema {
 }
 
 let memorySnapshot: unknown = null
+const memoryPhotos = new Map<string, Blob>()
 
 function hasIndexedDB(): boolean {
   return typeof indexedDB !== 'undefined'
@@ -53,17 +54,25 @@ export async function saveSnapshot(snapshot: PersistedKunuState): Promise<void> 
 }
 
 export async function saveLocalPhoto(id: string, photo: Blob): Promise<void> {
+  memoryPhotos.set(id, photo)
   const db = await database()
   if (db) await db.put('photos', photo, id)
 }
 
 export async function loadLocalPhoto(id: string): Promise<Blob | undefined> {
   const db = await database()
-  return db ? db.get('photos', id) : undefined
+  return db ? (await db.get('photos', id)) ?? memoryPhotos.get(id) : memoryPhotos.get(id)
+}
+
+export async function deleteLocalPhoto(id: string): Promise<void> {
+  memoryPhotos.delete(id)
+  const db = await database()
+  if (db) await db.delete('photos', id)
 }
 
 export async function clearKunuDatabase(): Promise<void> {
   memorySnapshot = null
+  memoryPhotos.clear()
   if (!hasIndexedDB()) return
   const db = await database()
   if (!db) return

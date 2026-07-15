@@ -6,12 +6,13 @@ This repository contains a production-ready vertical slice centered on Clara’s
 
 ## What is included
 
-- Premium local-first onboarding with a ready-to-use Clara demo
+- Consent-gated private character studio powered by OpenAI `gpt-image-2`
+- Three-reference upload, polished generation progress, reveal, approval, regeneration, adjustment, cancellation, and error recovery
 - Interactive Three.js globe with inertia, zoom, atmosphere, and destination pins
 - Accessible stylized 2D map and automatic non-WebGL fallback
 - Responsive World, Timeline, Passport, and Profile destinations
 - Cinematic memory portals using original Kunu Block artwork
-- A playable Yosemite diorama with Clara, Buddy, waterfall, river, cliffs, meadow, forest, wildlife, wind, and golden-hour light
+- A playable Yosemite diorama with a camera-facing generated 2.5D character, procedural Clara fallback, Buddy, waterfall, river, cliffs, meadow, forest, wildlife, wind, and golden-hour light
 - Desktop controls, touch joystick, camera drag, limited zoom, and landscape guidance
 - Four working Yosemite activities: waterfall discovery, three souvenirs, memory recreation screenshot, and a retryable valley question
 - Persistent XP, completion, explorer levels, collectibles, settings, and Yosemite Explorer badge
@@ -25,6 +26,7 @@ This repository contains a production-ready vertical slice centered on Clara’s
 - Node.js 20 or newer
 - npm 10 or newer
 - A current version of Chrome, Safari, or Edge
+- An OpenAI API key with access to `gpt-image-2` for character generation
 
 ## Install and run
 
@@ -34,6 +36,19 @@ npm run dev
 ```
 
 Vite prints the local URL, normally `http://localhost:5173`.
+
+Vite alone serves the browser app. To exercise the Vercel server function locally, copy `.env.example` to `.env.local`, provide the server-only key, and run `npx vercel dev`. Never use a `VITE_` prefix for the key.
+
+## Character generation configuration
+
+Configure these encrypted environment variables in the Vercel project:
+
+```text
+OPENAI_API_KEY=your-server-only-key
+OPENAI_IMAGE_MODEL=gpt-image-2
+```
+
+The browser sends three resized in-memory references to `POST /api/generate-character` only after explicit consent. The Vercel function passes the images directly to OpenAI, sets `Cache-Control: no-store`, does not write files or database records, and returns one compressed generated character sheet. Original references and unapproved results remain session-only. IndexedDB receives only the approved generated sheet.
 
 ## Production build
 
@@ -57,6 +72,9 @@ The test suite covers:
 - explorer progression and level thresholds
 - globe/map switching
 - complete Yosemite activity, XP, collectible, and badge-unlock flow
+- server endpoint consent, API-key, and three-view validation
+- character persistence schema migration
+- production-flow character approval without reference-photo persistence
 
 ## Yosemite controls
 
@@ -91,13 +109,16 @@ Use the install icon in the browser address bar, or open the browser menu and ch
 
 ## Privacy
 
-Kunu has no backend, account, analytics SDK, paid API, or API key.
+Kunu has no account or analytics SDK. The only backend route is the server-side character-generation proxy.
 
-- Imported photographs are written only to local IndexedDB.
+- Parent consent is required before any reference leaves the browser.
+- References are resized in memory, sent temporarily to OpenAI, and never written to Kunu server storage or IndexedDB.
+- `OPENAI_API_KEY` exists only in the Vercel server environment and is never exposed through a `VITE_` browser variable.
+- Only an approved generated character sheet is written to local IndexedDB.
 - Family photographs are not part of this repository or production bundle.
 - The attached private family references were used only to understand age progression, clothing, colors, landscapes, Buddy, and atmosphere.
 - Every committed visual is an original procedural Kunu Block derivative. See [ASSETS.md](./ASSETS.md).
-- Clearing site data removes imported photos and saved progress.
+- Clearing site data removes the approved generated character and saved progress.
 
 ## Project structure
 
@@ -105,7 +126,7 @@ Kunu has no backend, account, analytics SDK, paid API, or API key.
 src/
   data/            Seed family and journey data
   features/        Onboarding, shell, world, timeline, passport, profile, adventure
-  hooks/           Browser-safe procedural audio
+  hooks/           Browser-safe audio and approved-character loading/isolation
   lib/             Age, persistence, progression, WebGL, and journey helpers
   store/           Zustand application state and persistence actions
   styles/          Responsive design system and adventure UI
@@ -123,7 +144,7 @@ public/
 - Yosemite rendering pauses when the page is hidden.
 - Natural cliffs and the diorama edge keep the player inside the finished world.
 - WebGL failure falls back to accessible static journey content instead of crashing.
-- PWA assets and generated visuals are precached for offline use.
+- Committed PWA assets are precached for offline use; private generated characters remain only in IndexedDB.
 
 ## Known platform behavior
 

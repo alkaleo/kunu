@@ -2,7 +2,9 @@
 
 All committed visuals are original, stylized Kunu Block derivatives created for this application. No family photograph, crop, thumbnail, encoded copy, or unmodified excerpt is present in this repository or production bundle.
 
-The requested Higgsfield integration was not available in the build environment, so the master prompt’s procedural/vector fallback was used. Private references informed only high-level appearance, age progression, clothing palette, Buddy, landscape color, and atmosphere.
+Private references informed only high-level appearance, age progression, clothing palette, Buddy, landscape color, and atmosphere in the committed procedural fallback assets.
+
+The OpenAI character studio generates a new user-approved character at runtime with `gpt-image-2`. That image is never committed, bundled, precached, published in documentation, or stored on the Kunu server. It exists only in the user’s local IndexedDB after approval. Original reference photos remain request-memory-only and are never added to IndexedDB.
 
 ## Asset inventory
 
@@ -36,6 +38,6 @@ The requested Higgsfield integration was not available in the build environment,
 
 ## Real-time assets
 
-The globe, Yosemite terrain, waterfall, river, pine forest, wildlife, Clara rig, Buddy rig, collectibles, route transition, controls, and activity markers are generated at runtime from Three.js geometry and materials. They do not contain external textures or private media.
+The globe, Yosemite terrain, waterfall, river, pine forest, wildlife, procedural Clara fallback, Buddy rig, collectibles, route transition, controls, and activity markers are generated at runtime from Three.js geometry and materials. When an approved local character is present, the browser derives a temporary background-isolated sprite in memory and renders it as a lit, camera-facing 2.5D plane with idle, walk, run, pose, and celebration motion plus a fake soft shadow. The derived sprite is not persisted.
 
 The in-game recreation screenshot is generated locally from the player’s WebGL canvas and persisted to IndexedDB. It is never uploaded.

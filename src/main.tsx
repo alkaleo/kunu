@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { App } from './App'
+import { RootErrorBoundary } from './features/shared/RootErrorBoundary'
 import './styles/global.css'
 
 const updateServiceWorker = registerSW({
@@ -15,6 +16,6 @@ const updateServiceWorker = registerSW({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <RootErrorBoundary><App /></RootErrorBoundary>
   </StrictMode>,
 )

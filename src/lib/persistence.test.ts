@@ -41,4 +41,9 @@ describe('persisted Kunu migrations', () => {
     expect(repaired.badges[0].id).toBe('yosemite-explorer')
     expect(repaired.settings.volume).toBeGreaterThan(0)
   })
+
+  it('preserves only a valid approved local character reference during schema migration', () => {
+    expect(migrateAndRepairSnapshot({ child: { characterImageId: 'approved-kunu-character-v1' } }).child.characterImageId).toBe('approved-kunu-character-v1')
+    expect(migrateAndRepairSnapshot({ child: { characterImageId: 42 } }).child.characterImageId).toBeUndefined()
+  })
 })

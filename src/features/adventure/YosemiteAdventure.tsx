@@ -5,10 +5,12 @@ import { seedActivityProgress, seedBadges } from '../../data/seed'
 import { activityCompletion, allActivitiesComplete } from '../../lib/progression'
 import { supportsWebGL } from '../../lib/webgl'
 import { useKunuAudio } from '../../hooks/useKunuAudio'
+import { useGeneratedCharacter } from '../../hooks/useGeneratedCharacter'
 import { useKunuStore } from '../../store/useKunuStore'
 import type { ActivityId } from '../../types/models'
 import { Button } from '../shared/Button'
 import { Icon } from '../shared/Icon'
+import { CharacterArt } from '../shared/CharacterArt'
 import { YosemiteScene, type MovementInput, type NearbyTarget } from './YosemiteScene'
 
 const activityLabels: Record<ActivityId, string> = { waterfall: 'Find the Waterfall', souvenirs: 'Collect Three Souvenirs', memory: 'Recreate the Memory', question: 'Yosemite Question' }
@@ -42,6 +44,7 @@ export function YosemiteAdventure() {
   const restart = useKunuStore((state) => state.restartYosemite)
   const webgl = supportsWebGL()
   const { playCue } = useKunuAudio('adventure')
+  const { spriteUrl } = useGeneratedCharacter()
   const completedIds = useMemo(() => Object.entries(progress.activities).filter(([,done]) => done).map(([id]) => id), [progress.activities])
 
   useEffect(() => {
@@ -94,7 +97,7 @@ export function YosemiteAdventure() {
           setWebglFailure(error)
         }, { once: true })
       }}>
-        <Suspense fallback={null}><YosemiteScene movement={movement} cameraYaw={cameraYaw} cameraZoom={cameraZoom} collectedIds={progress.souvenirs} completedIds={completedIds} onNearby={setNearby}/></Suspense>
+        <Suspense fallback={null}><YosemiteScene movement={movement} cameraYaw={cameraYaw} cameraZoom={cameraZoom} collectedIds={progress.souvenirs} completedIds={completedIds} characterImageUrl={spriteUrl} onNearby={setNearby}/></Suspense>
       </Canvas>
     </div>
     <CameraDragZone cameraYaw={cameraYaw}/>
@@ -153,5 +156,5 @@ function ActivityModal({ children, onClose, wide=false }: { children:React.React
 }
 
 function BadgeCelebration({ xp, onPassport, onWorld, onAgain }: { xp:number; onPassport:()=>void; onWorld:()=>void; onAgain:()=>void }) {
-  return <motion.div className="badge-celebration" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><img className="celebration-backdrop" src="/assets/celebration/yosemite-celebration.svg" alt=""/><div className="celebration-rays"/><motion.img src="/assets/badges/yosemite-explorer.svg" alt="Yosemite Explorer badge" initial={{scale:.4,rotate:-18}} animate={{scale:1,rotate:0}} transition={{type:'spring',stiffness:170,damping:14}}/><p className="eyebrow">Journey complete</p><h1>Yosemite Explorer</h1><p>Clara followed every clue. Buddy is doing his best victory dance.</p><div className="celebration-xp"><Icon name="sparkle"/><strong>{xp}</strong><span>total XP</span></div><div className="celebration-actions"><Button onClick={onPassport}>Add to Passport</Button><Button variant="glass" onClick={onWorld}>Return to World</Button><Button variant="quiet" onClick={onAgain}>Explore Again</Button></div></motion.div>
+  return <motion.div className="badge-celebration" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><img className="celebration-backdrop" src="/assets/celebration/yosemite-celebration.svg" alt=""/><div className="celebration-rays"/><CharacterArt className="celebration-character" variant="full-body" fallback="/assets/characters/clara-yosemite.svg"/><motion.img src="/assets/badges/yosemite-explorer.svg" alt="Yosemite Explorer badge" initial={{scale:.4,rotate:-18}} animate={{scale:1,rotate:0}} transition={{type:'spring',stiffness:170,damping:14}}/><p className="eyebrow">Journey complete</p><h1>Yosemite Explorer</h1><p>Clara followed every clue. Buddy is doing his best victory dance.</p><div className="celebration-xp"><Icon name="sparkle"/><strong>{xp}</strong><span>total XP</span></div><div className="celebration-actions"><Button onClick={onPassport}>Add to Passport</Button><Button variant="glass" onClick={onWorld}>Return to World</Button><Button variant="quiet" onClick={onAgain}>Explore Again</Button></div></motion.div>
 }

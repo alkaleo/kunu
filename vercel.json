@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/generate-character.ts": {
+      "maxDuration": 90
+    }
+  }
+}

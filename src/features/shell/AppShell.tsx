@@ -7,6 +7,7 @@ import { Profile } from '../profile/Profile'
 import { Timeline } from '../timeline/Timeline'
 import { JourneyPreview } from '../world/JourneyPreview'
 import { Navigation } from './Navigation'
+import { CharacterArt } from '../shared/CharacterArt'
 
 const WorldHome = lazy(() => import('../world/WorldHome').then((module) => ({ default: module.WorldHome })))
 
@@ -28,7 +29,7 @@ export function AppShell() {
           <span className="status-dot" />
           <span>Private on this device</span>
         </div>
-        <button className="avatar" aria-label={`${child.name} profile`}>C</button>
+        <button className="avatar" aria-label={`${child.name} profile`}><CharacterArt variant="portrait"/></button>
       </header>
 
       <AnimatePresence mode="wait">

@@ -1,4 +1,4 @@
-import { Float, Html, RoundedBox } from '@react-three/drei'
+import { Billboard, Float, Html, RoundedBox, useTexture } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
@@ -21,10 +21,11 @@ interface YosemiteSceneProps {
   cameraZoom: React.MutableRefObject<number>
   collectedIds: string[]
   completedIds: string[]
+  characterImageUrl?: string
   onNearby: (target: NearbyTarget | null) => void
 }
 
-export function YosemiteScene({ movement, cameraYaw, cameraZoom, collectedIds, completedIds, onNearby }: YosemiteSceneProps) {
+export function YosemiteScene({ movement, cameraYaw, cameraZoom, collectedIds, completedIds, characterImageUrl, onNearby }: YosemiteSceneProps) {
   return <>
     <color attach="background" args={['#a7d9db']}/>
     <fog attach="fog" args={['#cfe5d9', 18, 40]}/>
@@ -37,7 +38,7 @@ export function YosemiteScene({ movement, cameraYaw, cameraZoom, collectedIds, c
     <Collectible id="pine-cone" position={[-7, .35, -4]} hidden={collectedIds.includes('pine-cone')}/>
     <Collectible id="granite-stone" position={[6.5, .3, -3]} hidden={collectedIds.includes('granite-stone')}/>
     <Collectible id="trail-token" position={[8, .4, 5]} hidden={collectedIds.includes('trail-token')}/>
-    <PlayerRig movement={movement} cameraYaw={cameraYaw} cameraZoom={cameraZoom} collectedIds={collectedIds} completedIds={completedIds} onNearby={onNearby}/>
+    <PlayerRig movement={movement} cameraYaw={cameraYaw} cameraZoom={cameraZoom} collectedIds={collectedIds} completedIds={completedIds} characterImageUrl={characterImageUrl} onNearby={onNearby}/>
   </>
 }
 
@@ -103,13 +104,14 @@ function Collectible({ id, position, hidden }: { id:string; position:[number,num
   return <Float speed={2.3} rotationIntensity={.6} floatIntensity={.45}><group position={position}><mesh castShadow>{id === 'trail-token' ? <cylinderGeometry args={[.34,.34,.11,18]}/> : id === 'granite-stone' ? <dodecahedronGeometry args={[.38,0]}/> : <coneGeometry args={[.32,.7,8]}/>}<meshStandardMaterial color={color} roughness={.7} metalness={id === 'trail-token' ? .35 : 0} emissive={color} emissiveIntensity={.16}/></mesh><pointLight color="#56e1df" intensity={.7} distance={3}/></group></Float>
 }
 
-function PlayerRig({ movement, cameraYaw, cameraZoom, collectedIds, completedIds, onNearby }: YosemiteSceneProps) {
+function PlayerRig({ movement, cameraYaw, cameraZoom, collectedIds, completedIds, characterImageUrl, onNearby }: YosemiteSceneProps) {
   const player = useRef<THREE.Group>(null)
   const buddy = useRef<THREE.Group>(null)
   const leftLeg = useRef<THREE.Group>(null)
   const rightLeg = useRef<THREE.Group>(null)
   const leftArm = useRef<THREE.Group>(null)
   const rightArm = useRef<THREE.Group>(null)
+  const generatedCharacter = useRef<THREE.Group>(null)
   const keys = useRef(new Set<string>())
   const previousNearby = useRef('')
   const { camera } = useThree()
@@ -147,6 +149,14 @@ function PlayerRig({ movement, cameraYaw, cameraZoom, collectedIds, completedIds
     const posing = k.has('p')
     if (leftArm.current) leftArm.current.rotation.z = THREE.MathUtils.lerp(leftArm.current.rotation.z, celebrating ? 2.3 : posing ? 1.25 : 0, .13)
     if (rightArm.current) rightArm.current.rotation.z = THREE.MathUtils.lerp(rightArm.current.rotation.z, celebrating ? -2.3 : posing ? -1.25 : 0, .13)
+    if (generatedCharacter.current) {
+      const running = moving && k.has('shift')
+      const bob = Math.abs(Math.sin(state.clock.elapsedTime * (running ? 13 : moving ? 9 : 2))) * (celebrating ? .22 : running ? .09 : moving ? .055 : .025)
+      generatedCharacter.current.position.y = 1.34 + bob
+      generatedCharacter.current.rotation.z = THREE.MathUtils.lerp(generatedCharacter.current.rotation.z, celebrating ? Math.sin(state.clock.elapsedTime * 8) * .09 : posing ? -.08 : moving ? Math.sin(state.clock.elapsedTime * 9) * .025 : 0, .18)
+      const stretch = celebrating ? 1.06 : running ? 1.025 : 1
+      generatedCharacter.current.scale.lerp(new THREE.Vector3(1 / stretch, stretch, 1), .18)
+    }
     player.current.position.y = Math.abs(Math.sin(state.clock.elapsedTime*(moving?9:2)))*(moving?.035:.015)
 
     temp.buddyTarget.copy(player.current.position).add(new THREE.Vector3(-1.05,0,.75).applyAxisAngle(new THREE.Vector3(0,1,0),player.current.rotation.y))
@@ -172,12 +182,27 @@ function PlayerRig({ movement, cameraYaw, cameraZoom, collectedIds, completedIds
 
   return <>
     <group ref={player} position={[0,0,5]}>
-      <group position={[0,1.65,0]}><RoundedBox args={[.68,.66,.58]} radius={.24} castShadow><meshStandardMaterial color="#e8aa92"/></RoundedBox><mesh position={[0,.22,-.08]} scale={[1.04,.52,1.02]}><sphereGeometry args={[.38,18,14]}/><meshStandardMaterial color="#765342"/></mesh><mesh position={[-.15,.03,.31]}><sphereGeometry args={[.035,8,8]}/><meshBasicMaterial color="#2c2927"/></mesh><mesh position={[.15,.03,.31]}><sphereGeometry args={[.035,8,8]}/><meshBasicMaterial color="#2c2927"/></mesh></group>
-      <RoundedBox args={[.75,.82,.5]} radius={.22} position={[0,1.02,0]} castShadow><meshStandardMaterial color="#efb9c3"/></RoundedBox>
-      <RoundedBox args={[.76,.35,.52]} radius={.12} position={[0,.54,0]} castShadow><meshStandardMaterial color="#a6ced6"/></RoundedBox>
-      <group ref={leftArm} position={[-.5,1.25,0]}><mesh position={[0,-.35,0]} castShadow><capsuleGeometry args={[.11,.52,6,10]}/><meshStandardMaterial color="#e8aa92"/></mesh></group><group ref={rightArm} position={[(.5),1.25,0]}><mesh position={[0,-.35,0]} castShadow><capsuleGeometry args={[.11,.52,6,10]}/><meshStandardMaterial color="#e8aa92"/></mesh></group>
-      <group ref={leftLeg} position={[-.23,.42,0]}><mesh position={[0,-.38,0]} castShadow><capsuleGeometry args={[.12,.58,6,10]}/><meshStandardMaterial color="#d89b80"/></mesh><RoundedBox args={[.32,.17,.55]} radius={.07} position={[0,-.75,.11]} castShadow><meshStandardMaterial color="#f2f4ee"/></RoundedBox></group><group ref={rightLeg} position={[(.23),.42,0]}><mesh position={[0,-.38,0]} castShadow><capsuleGeometry args={[.12,.58,6,10]}/><meshStandardMaterial color="#d89b80"/></mesh><RoundedBox args={[.32,.17,.55]} radius={.07} position={[0,-.75,.11]} castShadow><meshStandardMaterial color="#f2f4ee"/></RoundedBox></group>
+      {characterImageUrl ? <><Billboard ref={generatedCharacter} position={[0,1.34,0]} follow lockX={false} lockY={false} lockZ={false}><GeneratedCharacterPlane url={characterImageUrl}/></Billboard><mesh rotation={[-Math.PI/2,0,0]} position={[0,.025,0]}><circleGeometry args={[.68,32]}/><meshBasicMaterial color="#16332c" transparent opacity={.24} depthWrite={false}/></mesh></> : <ProceduralClara leftArm={leftArm} rightArm={rightArm} leftLeg={leftLeg} rightLeg={rightLeg}/>}
     </group>
     <group ref={buddy} position={[-1,0,5.7]} scale={.72}><RoundedBox args={[.75,.72,.58]} radius={.25} position={[0,.62,0]} castShadow><meshStandardMaterial color="#8d5d3d"/></RoundedBox><mesh position={[0,1.18,0]} castShadow><sphereGeometry args={[.43,16,14]}/><meshStandardMaterial color="#9c6b45"/></mesh><mesh position={[-.3,1.47,0]}><sphereGeometry args={[.17,12,10]}/><meshStandardMaterial color="#73472f"/></mesh><mesh position={[.3,1.47,0]}><sphereGeometry args={[.17,12,10]}/><meshStandardMaterial color="#73472f"/></mesh><mesh position={[0,1.1,.37]} scale={[.7,.55,.5]}><sphereGeometry args={[.28,12,10]}/><meshStandardMaterial color="#d1a176"/></mesh><mesh position={[0,1.13,.51]}><sphereGeometry args={[.05,8,8]}/><meshBasicMaterial color="#231a16"/></mesh></group>
+  </>
+}
+
+function GeneratedCharacterPlane({ url }: { url: string }) {
+  const texture = useTexture(url)
+  useEffect(() => {
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.needsUpdate = true
+  }, [texture])
+  return <mesh position={[0,0,.03]}><planeGeometry args={[1.3,2.72]}/><meshStandardMaterial map={texture} transparent alphaTest={.06} side={THREE.DoubleSide} roughness={.82} metalness={0}/></mesh>
+}
+
+function ProceduralClara({ leftArm, rightArm, leftLeg, rightLeg }: { leftArm: React.RefObject<THREE.Group | null>; rightArm: React.RefObject<THREE.Group | null>; leftLeg: React.RefObject<THREE.Group | null>; rightLeg: React.RefObject<THREE.Group | null> }) {
+  return <>
+    <group position={[0,1.65,0]}><RoundedBox args={[.68,.66,.58]} radius={.24} castShadow><meshStandardMaterial color="#e8aa92"/></RoundedBox><mesh position={[0,.22,-.08]} scale={[1.04,.52,1.02]}><sphereGeometry args={[.38,18,14]}/><meshStandardMaterial color="#765342"/></mesh><mesh position={[-.15,.03,.31]}><sphereGeometry args={[.035,8,8]}/><meshBasicMaterial color="#2c2927"/></mesh><mesh position={[.15,.03,.31]}><sphereGeometry args={[.035,8,8]}/><meshBasicMaterial color="#2c2927"/></mesh></group>
+    <RoundedBox args={[.75,.82,.5]} radius={.22} position={[0,1.02,0]} castShadow><meshStandardMaterial color="#efb9c3"/></RoundedBox>
+    <RoundedBox args={[.76,.35,.52]} radius={.12} position={[0,.54,0]} castShadow><meshStandardMaterial color="#a6ced6"/></RoundedBox>
+    <group ref={leftArm} position={[-.5,1.25,0]}><mesh position={[0,-.35,0]} castShadow><capsuleGeometry args={[.11,.52,6,10]}/><meshStandardMaterial color="#e8aa92"/></mesh></group><group ref={rightArm} position={[(.5),1.25,0]}><mesh position={[0,-.35,0]} castShadow><capsuleGeometry args={[.11,.52,6,10]}/><meshStandardMaterial color="#e8aa92"/></mesh></group>
+    <group ref={leftLeg} position={[-.23,.42,0]}><mesh position={[0,-.38,0]} castShadow><capsuleGeometry args={[.12,.58,6,10]}/><meshStandardMaterial color="#d89b80"/></mesh><RoundedBox args={[.32,.17,.55]} radius={.07} position={[0,-.75,.11]} castShadow><meshStandardMaterial color="#f2f4ee"/></RoundedBox></group><group ref={rightLeg} position={[(.23),.42,0]}><mesh position={[0,-.38,0]} castShadow><capsuleGeometry args={[.12,.58,6,10]}/><meshStandardMaterial color="#d89b80"/></mesh><RoundedBox args={[.32,.17,.55]} radius={.07} position={[0,-.75,.11]} castShadow><meshStandardMaterial color="#f2f4ee"/></RoundedBox></group>
   </>
 }

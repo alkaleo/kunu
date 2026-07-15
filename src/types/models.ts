@@ -16,6 +16,7 @@ export interface ChildProfile {
   dateOfBirth: string
   characterStyle: 'kunu-block'
   homeMusic: 'calm'
+  characterImageId?: string
 }
 
 export interface JourneyPhoto {
