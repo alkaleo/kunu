@@ -63,7 +63,7 @@ export function Onboarding() {
     setGenerationStage(0)
     setGenerationError('')
     const stageTimer = window.setInterval(() => setGenerationStage((current) => Math.min(2, current + 1)), 1600)
-    const timeout = window.setTimeout(() => controller.abort(), 90_000)
+    const timeout = window.setTimeout(() => controller.abort(), 220_000)
     try {
       const images = await Promise.all(files.map((file, index) => prepareReferencePhoto(file!, referenceSlots[index].view)))
       const response = await fetch('/api/generate-character', {

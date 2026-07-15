@@ -5,7 +5,7 @@ export type CharacterApiRequest = IncomingMessage & { body?: unknown }
 export type CharacterApiResponse = ServerResponse
 
 const MAX_IMAGE_BYTES = 1_600_000
-const REQUEST_TIMEOUT_MS = 80_000
+const REQUEST_TIMEOUT_MS = 210_000
 const supportedTypes = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 interface CharacterReference {
