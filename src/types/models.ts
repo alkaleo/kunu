@@ -1,6 +1,7 @@
 export type JourneyStatus = 'playable' | 'preparing'
 export type AppSection = 'world' | 'timeline' | 'passport' | 'profile'
 export type WorldView = 'globe' | 'map'
+export type ExperienceMode = 'memory' | 'preview' | 'transition' | 'adventure'
 export type ActivityId = 'waterfall' | 'souvenirs' | 'memory' | 'question'
 
 export interface ParentProfile {

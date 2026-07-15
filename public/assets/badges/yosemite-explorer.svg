@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="t d">
+  <title id="t">Yosemite Explorer badge</title><desc id="d">An original Kunu Block explorer badge with granite, waterfall, pine, and Buddy.</desc>
+  <defs><linearGradient id="rim" x2="1" y2="1"><stop stop-color="#56e1df"/><stop offset="1" stop-color="#0e9fa8"/></linearGradient><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#b9eef0"/><stop offset="1" stop-color="#f3c579"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#0c1b23" flood-opacity=".3"/></filter></defs>
+  <circle cx="256" cy="256" r="238" fill="#0c1b23"/><circle cx="256" cy="256" r="217" fill="url(#rim)"/><circle cx="256" cy="256" r="187" fill="url(#sky)" stroke="#f7faf9" stroke-width="10"/>
+  <path d="M82 320 174 120l88 141 71-127 98 186v97H82Z" fill="#778280"/><path d="M112 320 175 169l48 93 39-2-43 98Z" fill="#cfd4cb"/><path d="M342 172c-4 75-12 130-51 196" fill="none" stroke="#ecffff" stroke-width="24" stroke-linecap="round"/><path d="M80 346c105-45 236-38 353 2v83H80Z" fill="#376e4d"/><path d="m149 357 43-105 44 105Z" fill="#1e533f"/>
+  <g filter="url(#s)" transform="translate(265 306)"><circle cx="48" cy="34" r="31" fill="#9b6946"/><circle cx="23" cy="12" r="13" fill="#774a31"/><circle cx="73" cy="12" r="13" fill="#774a31"/><rect x="16" y="54" width="65" height="57" rx="24" fill="#8d5c3e"/><ellipse cx="48" cy="41" rx="17" ry="13" fill="#d4aa7d"/><path d="M44 37h8l-4 6Z" fill="#241c18"/></g>
+  <path d="M155 456h202" stroke="#f7faf9" stroke-width="12" stroke-linecap="round" opacity=".9"/>
+</svg>
