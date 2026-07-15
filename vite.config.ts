@@ -53,6 +53,10 @@ export default defineConfig({
         ]
       },
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}']
       }
     })
@@ -60,6 +64,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     css: true
   }
 })

@@ -1,15 +1,7 @@
 import { create } from 'zustand'
-import {
-  seedActivityProgress,
-  seedBadges,
-  seedChild,
-  seedCollectibles,
-  seedExplorer,
-  seedJourneys,
-  seedParent,
-  seedSettings,
-} from '../data/seed'
+import { seedActivityProgress } from '../data/seed'
 import { clearKunuDatabase, loadSnapshot, saveSnapshot } from '../lib/db'
+import { createDefaultSnapshot, migrateAndRepairSnapshot } from '../lib/persistence'
 import { activityCompletion, activityXp, allActivitiesComplete } from '../lib/progression'
 import type { ActivityId, AppSection, ChildProfile, ExperienceMode, Journey, ParentProfile, PersistedKunuState, Settings, WorldView } from '../types/models'
 
@@ -39,22 +31,12 @@ interface KunuStore extends PersistedKunuState {
 }
 
 export function createInitialSnapshot(): PersistedKunuState {
-  return {
-    parent: structuredClone(seedParent),
-    child: structuredClone(seedChild),
-    journeys: structuredClone(seedJourneys),
-    activityProgress: structuredClone(seedActivityProgress),
-    explorer: structuredClone(seedExplorer),
-    badges: structuredClone(seedBadges),
-    collectibles: structuredClone(seedCollectibles),
-    settings: structuredClone(seedSettings),
-    onboardingComplete: false,
-  }
+  return createDefaultSnapshot()
 }
 
 function toSnapshot(state: KunuStore): PersistedKunuState {
-  const { parent, child, journeys, activityProgress, explorer, badges, collectibles, settings, onboardingComplete } = state
-  return { parent, child, journeys, activityProgress, explorer, badges, collectibles, settings, onboardingComplete }
+  const { schemaVersion, parent, child, journeys, activityProgress, explorer, badges, collectibles, settings, onboardingComplete } = state
+  return { schemaVersion, parent, child, journeys, activityProgress, explorer, badges, collectibles, settings, onboardingComplete }
 }
 
 export const useKunuStore = create<KunuStore>((set, get) => ({
@@ -86,11 +68,9 @@ export const useKunuStore = create<KunuStore>((set, get) => ({
   },
   hydrate: async () => {
     const saved = await loadSnapshot()
-    if (saved) set({ ...saved, hydrated: true })
-    else {
-      set({ hydrated: true })
-      await saveSnapshot(toSnapshot(get()))
-    }
+    const repaired = saved ? migrateAndRepairSnapshot(saved) : createInitialSnapshot()
+    set({ ...repaired, hydrated: true })
+    await saveSnapshot(toSnapshot(get()))
   },
   resetDemo: async () => {
     await clearKunuDatabase()

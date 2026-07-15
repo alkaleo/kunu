@@ -82,6 +82,7 @@ export interface Settings {
 }
 
 export interface PersistedKunuState {
+  schemaVersion: number
   parent: ParentProfile
   child: ChildProfile
   journeys: Journey[]

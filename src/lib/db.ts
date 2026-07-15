@@ -7,7 +7,7 @@ const SNAPSHOT_KEY = 'primary'
 interface KunuDBSchema {
   snapshot: {
     key: string
-    value: PersistedKunuState
+    value: unknown
   }
   photos: {
     key: string
@@ -15,7 +15,7 @@ interface KunuDBSchema {
   }
 }
 
-let memorySnapshot: PersistedKunuState | null = null
+let memorySnapshot: unknown = null
 
 function hasIndexedDB(): boolean {
   return typeof indexedDB !== 'undefined'
@@ -35,10 +35,10 @@ async function database(): Promise<IDBPDatabase<KunuDBSchema> | null> {
 export async function loadSnapshot(): Promise<PersistedKunuState | null> {
   try {
     const db = await database()
-    if (!db) return memorySnapshot
-    return (await db.get('snapshot', SNAPSHOT_KEY)) ?? null
+    if (!db) return memorySnapshot as PersistedKunuState | null
+    return ((await db.get('snapshot', SNAPSHOT_KEY)) as PersistedKunuState | undefined) ?? null
   } catch {
-    return memorySnapshot
+    return memorySnapshot as PersistedKunuState | null
   }
 }
 

@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { seedActivityProgress, seedBadges } from '../../data/seed'
 import { activityCompletion, allActivitiesComplete } from '../../lib/progression'
 import { supportsWebGL } from '../../lib/webgl'
 import { useKunuAudio } from '../../hooks/useKunuAudio'
@@ -24,10 +25,13 @@ export function YosemiteAdventure() {
   const [captured, setCaptured] = useState('')
   const [celebrating, setCelebrating] = useState(false)
   const [visible, setVisible] = useState(!document.hidden)
-  const progress = useKunuStore((state) => state.activityProgress.yosemite)
+  const [webglFailure, setWebglFailure] = useState<Error | null>(null)
+  const progress = useKunuStore((state) => state.activityProgress.yosemite ?? seedActivityProgress.yosemite)
   const explorer = useKunuStore((state) => state.explorer)
-  const collectibles = useKunuStore((state) => state.collectibles.filter((item) => item.journeyId === 'yosemite'))
-  const badge = useKunuStore((state) => state.badges.find((item) => item.id === 'yosemite-explorer')!)
+  const allCollectibles = useKunuStore((state) => state.collectibles)
+  const badges = useKunuStore((state) => state.badges)
+  const collectibles = useMemo(() => allCollectibles.filter((item) => item.journeyId === 'yosemite'), [allCollectibles])
+  const badge = badges.find((item) => item.id === 'yosemite-explorer') ?? seedBadges[0]
   const setMode = useKunuStore((state) => state.setExperienceMode)
   const setSection = useKunuStore((state) => state.setSection)
   const completeActivity = useKunuStore((state) => state.completeActivity)
@@ -77,12 +81,19 @@ export function YosemiteAdventure() {
     completeActivity('memory'); playCue('discover')
   }
 
-  if (!webgl) return <main className="adventure-fallback"><img src="/assets/journeys/yosemite-cover.svg" alt="Stylized Yosemite valley"/><div><p className="eyebrow">Static memory mode</p><h1>Yosemite is still here.</h1><p>This device cannot start a WebGL adventure, so Kunu has kept the journey available as an accessible memory card.</p><Button onClick={closeAdventure}>Return to world</Button></div></main>
+  if (!webgl || webglFailure) return <WebGLFallback error={webglFailure} onReturn={closeAdventure}/>
 
   return <main className="adventure-shell" onWheel={(event) => { cameraZoom.current = Math.max(.72, Math.min(1.22, cameraZoom.current + event.deltaY * .0006)) }}>
     <div className="rotate-message"><div className="rotate-device"><span/></div><p className="eyebrow">Adventure mode</p><h1>Turn sideways to explore.</h1><p>Memory Mode stays portrait-first. Yosemite opens up in landscape.</p><Button variant="glass" onClick={closeAdventure}>Return to World</Button></div>
-    <div className="yosemite-canvas">
-      <Canvas shadows frameloop={visible ? 'always' : 'never'} camera={{ position: [7,7,13], fov: 43, near: .1, far: 80 }} dpr={[1,1.5]} gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}>
+    <div className="yosemite-canvas" data-testid="yosemite-canvas">
+      <Canvas fallback={<CanvasWebGLFallback onReturn={closeAdventure}/>} shadows frameloop={visible ? 'always' : 'never'} camera={{ position: [7,7,13], fov: 43, near: .1, far: 80 }} dpr={[1,1.5]} gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }} onCreated={({ gl }) => {
+        gl.domElement.addEventListener('webglcontextlost', (event) => {
+          event.preventDefault()
+          const error = new Error('The WebGL context was lost while Yosemite was running.')
+          console.error('[Kunu] Yosemite WebGL context lost.', error)
+          setWebglFailure(error)
+        }, { once: true })
+      }}>
         <Suspense fallback={null}><YosemiteScene movement={movement} cameraYaw={cameraYaw} cameraZoom={cameraZoom} collectedIds={progress.souvenirs} completedIds={completedIds} onNearby={setNearby}/></Suspense>
       </Canvas>
     </div>
@@ -98,6 +109,15 @@ export function YosemiteAdventure() {
     {dialog === 'question' && <QuestionActivity wrong={questionWrong} correct={questionCorrect} onAnswer={(answer) => { recordAttempt('question'); if(answer === 'Glaciers') { setQuestionCorrect(true); completeActivity('question'); playCue('discover') } else setQuestionWrong(true) }} onClose={() => { setDialog(null); setQuestionCorrect(false); setQuestionWrong(false) }}/>} 
     <AnimatePresence>{celebrating && <BadgeCelebration xp={explorer.xp} onPassport={() => { addBadge('yosemite-explorer'); setCelebrating(false); setMode('memory'); setSection('passport') }} onWorld={() => { setCelebrating(false); closeAdventure() }} onAgain={() => { restart(); setCelebrating(false) }}/>}</AnimatePresence>
   </main>
+}
+
+function WebGLFallback({ error, onReturn }: { error: Error | null; onReturn: () => void }) {
+  useEffect(() => { if (error) console.error('[Kunu] Yosemite switched to its WebGL fallback.', error) }, [error])
+  return <main className="adventure-fallback" data-testid="webgl-fallback"><img src="/assets/journeys/yosemite-cover.svg" alt="Stylized Yosemite valley"/><div><p className="eyebrow">Static memory mode</p><h1>Yosemite is still here.</h1><p>This device could not create a stable WebGL scene, so Kunu kept the journey available as an accessible memory card.</p><Button onClick={onReturn}>Return to world</Button></div></main>
+}
+
+function CanvasWebGLFallback({ onReturn }: { onReturn: () => void }) {
+  return <div className="adventure-canvas-fallback" data-testid="webgl-fallback"><p>Yosemite is available in static memory mode on this device.</p><Button onClick={onReturn}>Return to world</Button></div>
 }
 
 function Joystick({ movement }: { movement: React.MutableRefObject<MovementInput> }) {

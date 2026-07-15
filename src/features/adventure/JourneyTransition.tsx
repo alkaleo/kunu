@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { seedChild, seedJourneys, seedSettings } from '../../data/seed'
 import { journeyLabel } from '../../lib/journey'
 import { useKunuStore } from '../../store/useKunuStore'
 
 export function JourneyTransition() {
-  const journey = useKunuStore((state) => state.journeys.find((item) => item.id === 'yosemite')!)
-  const child = useKunuStore((state) => state.child)
-  const reducedMotion = useKunuStore((state) => state.settings.reducedMotion)
+  const journey = useKunuStore((state) => state.journeys.find((item) => item.id === 'yosemite') ?? seedJourneys[0])
+  const child = useKunuStore((state) => state.child ?? seedChild)
+  const reducedMotion = useKunuStore((state) => state.settings?.reducedMotion ?? seedSettings.reducedMotion)
   const setMode = useKunuStore((state) => state.setExperienceMode)
   const visit = useKunuStore((state) => state.visitJourney)
   const [canSkip, setCanSkip] = useState(false)
