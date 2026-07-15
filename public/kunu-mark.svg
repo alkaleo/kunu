@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Kunu compass mark</title>
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#56e1df"/>
+      <stop offset="1" stop-color="#0e9fa8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#0c1b23"/>
+  <circle cx="256" cy="256" r="154" fill="url(#sea)" opacity=".18"/>
+  <path d="M256 88c18 55 38 87 75 109 34 21 65 32 93 41-51 17-84 34-108 67-21 29-40 69-60 119-19-52-38-90-63-119-25-29-58-48-105-67 47-14 82-32 106-58 27-28 46-61 62-92Z" fill="url(#sea)"/>
+  <circle cx="256" cy="256" r="48" fill="#f7faf9"/>
+  <path d="M236 235v43m0-21 34-24m-34 24 35 25" fill="none" stroke="#0c1b23" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+</svg>
