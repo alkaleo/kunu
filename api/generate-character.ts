@@ -111,7 +111,6 @@ export default async function generateCharacter(req: CharacterApiRequest, res: C
       model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
       image: uploads,
       prompt: adjustment ? `${characterPrompt}\nParent-requested adjustment: ${adjustment}` : characterPrompt,
-      input_fidelity: 'high',
       background: 'opaque',
       quality: 'high',
       size: '1536x1024',
