@@ -48,12 +48,18 @@ function GlobeMesh({ journeys }: { journeys: Journey[] }) {
   </group>
 }
 
+function CloudLayer() {
+  const clouds = useRef<THREE.Mesh>(null)
+  useFrame((_, delta) => { if (clouds.current) clouds.current.rotation.y += delta * .018 })
+  return <mesh ref={clouds} scale={1.027} rotation={[0, .5, .15]}><sphereGeometry args={[1.5, 36, 36]}/><meshBasicMaterial color="#f7ffff" wireframe transparent opacity={.08}/></mesh>
+}
+
 export function WorldGlobe({ journeys }: { journeys: Journey[] }) {
   return <div className="globe-canvas" aria-label="Interactive globe showing Yosemite, Lapland, and Corfu">
     <Canvas camera={{ position: [0, .15, 4.5], fov: 42 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'high-performance', alpha: true }}>
       <ambientLight intensity={1.2}/><directionalLight position={[3, 4, 5]} intensity={2.4} color="#fff5dc"/><directionalLight position={[-4, -1, 2]} intensity={.55} color="#56e1df"/>
       <Stars radius={35} depth={10} count={260} factor={1.2} saturation={0} fade speed={.2}/>
-      <GlobeMesh journeys={journeys}/>
+      <GlobeMesh journeys={journeys}/><CloudLayer/>
       <OrbitControls enablePan={false} enableDamping dampingFactor={.06} rotateSpeed={.55} zoomSpeed={.6} minDistance={3.25} maxDistance={5.1}/>
     </Canvas>
   </div>

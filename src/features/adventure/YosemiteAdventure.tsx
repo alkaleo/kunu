@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { activityCompletion, allActivitiesComplete } from '../../lib/progression'
 import { supportsWebGL } from '../../lib/webgl'
+import { useKunuAudio } from '../../hooks/useKunuAudio'
 import { useKunuStore } from '../../store/useKunuStore'
 import type { ActivityId } from '../../types/models'
 import { Button } from '../shared/Button'
@@ -36,6 +37,7 @@ export function YosemiteAdventure() {
   const addBadge = useKunuStore((state) => state.addBadgeToPassport)
   const restart = useKunuStore((state) => state.restartYosemite)
   const webgl = supportsWebGL()
+  const { playCue } = useKunuAudio('adventure')
   const completedIds = useMemo(() => Object.entries(progress.activities).filter(([,done]) => done).map(([id]) => id), [progress.activities])
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export function YosemiteAdventure() {
     if (!nearby) return
     if (nearby.kind === 'souvenir') {
       const item = collectibles.find((collectible) => collectible.id === nearby.id)
-      collectSouvenir(nearby.id)
+      collectSouvenir(nearby.id); playCue('collect')
       setPickup(item?.name ?? 'Souvenir')
       window.setTimeout(() => setPickup(''), 1800)
       return
@@ -72,7 +74,7 @@ export function YosemiteAdventure() {
     let image = ''
     try { image = canvas?.toDataURL('image/png') ?? '' } catch { image = '' }
     if (image) { setCaptured(image); saveRecreation(image) }
-    completeActivity('memory')
+    completeActivity('memory'); playCue('discover')
   }
 
   if (!webgl) return <main className="adventure-fallback"><img src="/assets/journeys/yosemite-cover.svg" alt="Stylized Yosemite valley"/><div><p className="eyebrow">Static memory mode</p><h1>Yosemite is still here.</h1><p>This device cannot start a WebGL adventure, so Kunu has kept the journey available as an accessible memory card.</p><Button onClick={closeAdventure}>Return to world</Button></div></main>
@@ -90,10 +92,10 @@ export function YosemiteAdventure() {
     <div className="desktop-controls"><span><kbd>WASD</kbd> Move</span><span><kbd>Shift</kbd> Run</span><span><kbd>Drag</kbd> Camera</span><span><kbd>Wheel</kbd> Zoom</span><span><kbd>E</kbd> Action</span><span><kbd>P</kbd> Pose</span></div>
     <Joystick movement={movement}/>
     <AnimatePresence>{nearby && <motion.button className="context-action" aria-label={nearby.label} initial={{ opacity: 0, scale: .85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: .85 }} onClick={act}><span>{nearby.label}</span><i>E</i></motion.button>}</AnimatePresence>
-    <AnimatePresence>{pickup && <motion.div className="pickup-toast" initial={{ opacity: 0, y: 25, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -15 }}><Icon name="sparkle"/><div><strong>{pickup} found</strong><span>+25 explorer XP</span></div></motion.div>}</AnimatePresence>
-    {dialog === 'waterfall' && <DiscoveryDialog onClose={() => setDialog(null)} onComplete={() => { completeActivity('waterfall'); setDialog(null) }}/>} 
+    <AnimatePresence>{pickup && <motion.div className="pickup-toast" role="status" aria-live="polite" initial={{ opacity: 0, y: 25, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -15 }}><Icon name="sparkle"/><div><strong>{pickup} found</strong><span>+25 explorer XP</span></div></motion.div>}</AnimatePresence>
+    {dialog === 'waterfall' && <DiscoveryDialog onClose={() => setDialog(null)} onComplete={() => { completeActivity('waterfall'); playCue('discover'); setDialog(null) }}/>} 
     {dialog === 'memory' && <MemoryActivity captured={captured || progress.screenshot || ''} onCapture={captureMemory} onClose={() => setDialog(null)}/>} 
-    {dialog === 'question' && <QuestionActivity wrong={questionWrong} correct={questionCorrect} onAnswer={(answer) => { recordAttempt('question'); if(answer === 'Glaciers') { setQuestionCorrect(true); completeActivity('question') } else setQuestionWrong(true) }} onClose={() => { setDialog(null); setQuestionCorrect(false); setQuestionWrong(false) }}/>} 
+    {dialog === 'question' && <QuestionActivity wrong={questionWrong} correct={questionCorrect} onAnswer={(answer) => { recordAttempt('question'); if(answer === 'Glaciers') { setQuestionCorrect(true); completeActivity('question'); playCue('discover') } else setQuestionWrong(true) }} onClose={() => { setDialog(null); setQuestionCorrect(false); setQuestionWrong(false) }}/>} 
     <AnimatePresence>{celebrating && <BadgeCelebration xp={explorer.xp} onPassport={() => { addBadge('yosemite-explorer'); setCelebrating(false); setMode('memory'); setSection('passport') }} onWorld={() => { setCelebrating(false); closeAdventure() }} onAgain={() => { restart(); setCelebrating(false) }}/>}</AnimatePresence>
   </main>
 }
@@ -131,5 +133,5 @@ function ActivityModal({ children, onClose, wide=false }: { children:React.React
 }
 
 function BadgeCelebration({ xp, onPassport, onWorld, onAgain }: { xp:number; onPassport:()=>void; onWorld:()=>void; onAgain:()=>void }) {
-  return <motion.div className="badge-celebration" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><div className="celebration-rays"/><motion.img src="/assets/badges/yosemite-explorer.svg" alt="Yosemite Explorer badge" initial={{scale:.4,rotate:-18}} animate={{scale:1,rotate:0}} transition={{type:'spring',stiffness:170,damping:14}}/><p className="eyebrow">Journey complete</p><h1>Yosemite Explorer</h1><p>Clara followed every clue. Buddy is doing his best victory dance.</p><div className="celebration-xp"><Icon name="sparkle"/><strong>{xp}</strong><span>total XP</span></div><div className="celebration-actions"><Button onClick={onPassport}>Add to Passport</Button><Button variant="glass" onClick={onWorld}>Return to World</Button><Button variant="quiet" onClick={onAgain}>Explore Again</Button></div></motion.div>
+  return <motion.div className="badge-celebration" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><img className="celebration-backdrop" src="/assets/celebration/yosemite-celebration.svg" alt=""/><div className="celebration-rays"/><motion.img src="/assets/badges/yosemite-explorer.svg" alt="Yosemite Explorer badge" initial={{scale:.4,rotate:-18}} animate={{scale:1,rotate:0}} transition={{type:'spring',stiffness:170,damping:14}}/><p className="eyebrow">Journey complete</p><h1>Yosemite Explorer</h1><p>Clara followed every clue. Buddy is doing his best victory dance.</p><div className="celebration-xp"><Icon name="sparkle"/><strong>{xp}</strong><span>total XP</span></div><div className="celebration-actions"><Button onClick={onPassport}>Add to Passport</Button><Button variant="glass" onClick={onWorld}>Return to World</Button><Button variant="quiet" onClick={onAgain}>Explore Again</Button></div></motion.div>
 }

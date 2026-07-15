@@ -1,17 +1,21 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { lazy, Suspense } from 'react'
+import { useKunuAudio } from '../../hooks/useKunuAudio'
 import { useKunuStore } from '../../store/useKunuStore'
 import { Passport } from '../passport/Passport'
 import { Profile } from '../profile/Profile'
 import { Timeline } from '../timeline/Timeline'
 import { JourneyPreview } from '../world/JourneyPreview'
-import { WorldHome } from '../world/WorldHome'
 import { Navigation } from './Navigation'
 
+const WorldHome = lazy(() => import('../world/WorldHome').then((module) => ({ default: module.WorldHome })))
+
 export function AppShell() {
+  useKunuAudio('home')
   const section = useKunuStore((state) => state.currentSection)
   const child = useKunuStore((state) => state.child)
   const mode = useKunuStore((state) => state.experienceMode)
-  const sections = { world: <WorldHome/>, timeline: <Timeline/>, passport: <Passport/>, profile: <Profile/> }
+  const sections = { world: <Suspense fallback={<div className="world-loading">Polishing the globe…</div>}><WorldHome/></Suspense>, timeline: <Timeline/>, passport: <Passport/>, profile: <Profile/> }
 
   return (
     <div className="app-shell">

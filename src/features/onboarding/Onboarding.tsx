@@ -44,10 +44,10 @@ export function Onboarding() {
       <label className="photo-import"><Icon name="sparkle"/><span>{photoCount ? `${photoCount} photo${photoCount === 1 ? '' : 's'} stored locally` : 'Choose up to three photos'}</span><input type="file" accept="image/*" multiple onChange={(event) => void importPhotos(event.target.files)}/></label>
     </OnboardingForm>,
     <OnboardingForm key="style" eyebrow="A character, not a scan" title="This is Kunu Block" body="Rounded toy-like forms, warm materials, and expressive movement—stylized to feel like Clara without recreating a photograph.">
-      <div className="age-variants"><div className="age-figure age-figure--six"><span className="figure-head"/><span className="figure-body"/><small>Age 6 · curious</small></div><div className="age-figure age-figure--seven"><span className="figure-head"/><span className="figure-body"/><small>Age 7 · confident</small></div><div className="buddy-mini"><span/><small>Buddy · always</small></div></div>
+      <div className="character-preview-strip"><figure><img src="/assets/characters/clara-age-6.svg" alt="Clara age six Kunu Block reference"/><figcaption>Age 6 · curious</figcaption></figure><figure><img src="/assets/characters/clara-age-7.svg" alt="Clara age seven Kunu Block reference"/><figcaption>Age 7 · confident</figcaption></figure><figure><img src="/assets/characters/buddy.svg" alt="Buddy Kunu Block companion reference"/><figcaption>Buddy · always</figcaption></figure></div>
     </OnboardingForm>,
     <div className="onboarding-hero" key="ready">
-      <div className="ready-art"><img src="/assets/journeys/yosemite-cover.svg" alt="Stylized Yosemite valley"/></div>
+      <div className="ready-art"><img src="/assets/launch/launch-art.svg" alt="Clara and Buddy facing three magical journey worlds"/></div>
       <p className="eyebrow">Your worlds are ready</p>
       <h1>Begin with Yosemite.</h1>
       <p>Clara was six. The valley was bright. Somewhere near the waterfall, a new explorer badge is waiting.</p>
